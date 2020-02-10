@@ -7,6 +7,34 @@ app.controller("AccountCtrl", function($scope, $http) {
 
 	console.log("Now in the acccount ctrl!");
 
+    $scope.updatePassword = function (new_email, current_password) {
+        $scope.status = "Loading...";
+
+        $http({
+            method: 'POST',
+            data:
+            {
+                "new_email": new_email,
+                "current_password": current_password
+            },
+            url: '/account/update_password'
+        }).then(function (response) {
+
+            var data = response.data;
+
+            if (data == "Invalid password") {
+                $scope.status = "Invalid password";
+            } else if (data == "Password updated") {
+                $scope.status = "Password updated";
+            }
+
+        });
+    }
+
+    $scope.submitEmail = function () {
+        $scope.updateEmail($scope.new_email, $scope.current_password);
+    }
+
 	$scope.updatePassword = function(old_password, new_password) {
 		$scope.status = "Loading...";
 

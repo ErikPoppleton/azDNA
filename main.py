@@ -137,11 +137,11 @@ def getEmail():
 def setEmail():
 	if session.get("user_id") is None:
 		return "You must be logged in to modify your account"
-
-	user_id = int(session["user_id"])
-	email_new = string(session["email"])
 	
-	return Account.setEmail(user_id, email_new)
+	email_new = string(session["email"])
+	user_id = int(session["user_id"])	
+	
+	return Account.setEmail(email_new, user_id)
 
 @app.route("/account/get_status", methods=["GET"])
 def getStatus():

@@ -51,9 +51,9 @@ def createSlurmAnalysisFile(job_directory, analysis_id):
 #SBATCH --job-name={analysis_id}    # Job name
 #SBATCH --ntasks=1                    # Run on a single CPU
 #SBATCH --time=336:00:00               # Time limit hrs:min:sec
-#SBATCH --output=/vagrant/azDNA/{job_output_file}   # Standard output and error log
-cd /vagrant/azDNA/{job_directory}
-python3 /vagrant/oxdna_analysis_tools/compute_mean.py -p 1 -d deviations.json -f oxDNA -o mean.dat trajectory.dat sim.top""".format(
+#SBATCH --output={job_output_file}   # Standard output and error log
+cd {job_directory}
+python3 /opt/oxdna_analysis_tools/compute_mean.py -p 1 -d deviations.json -f oxDNA -o mean.dat trajectory.dat sim.top""".format(
 	analysis_id=analysis_id,
 	job_directory=job_directory, 
 	job_output_file=job_output_file
@@ -77,8 +77,8 @@ def createSlurmJobFile(job_directory, backend):
 #SBATCH --partition={backend}
 #SBATCH --ntasks=1                    # Run on a single CPU
 #SBATCH --time=336:00:00               # Time limit hrs:min:sec
-#SBATCH --output=/var/www/azDNA/azDNA/{job_output_file}   # Standard output and error log
-cd /var/www/azDNA/azDNA/{job_directory}
+#SBATCH --output={job_output_file}   # Standard output and error log
+cd {job_directory}
 /opt/oxdna/oxDNA/build/bin/oxDNA input""".	format(
 	job_directory=job_directory, 
 	job_output_file=job_output_file,
@@ -115,7 +115,7 @@ def createAnalysisForUserIdWithJob(userId, jobId):
 
 	randomAnalysisId = str(uuid.uuid4())
 
-	user_directory = "jobfiles/"+str(userId) + "/"
+	user_directory = "/users/"+str(userId) + "/"
 	job_directory = user_directory + jobId + "/"
 
 	createSlurmAnalysisFile(job_directory, randomAnalysisId)
@@ -151,7 +151,7 @@ def createJobForUserIdWithData(userId, jsonData):
 	cursor = cnx.cursor(buffered=True)
 	randomJobId = str(uuid.uuid4())
 
-	user_directory = "jobfiles/"+str(userId) + "/"
+	user_directory = "/users/"+str(userId) + "/"
 	job_directory = user_directory + randomJobId + "/"
 
 	if not os.path.exists(user_directory):
@@ -164,6 +164,7 @@ def createJobForUserIdWithData(userId, jsonData):
 
 	#write the top and conf files
 	for (file_name, file_data) in files.items():
+		#set file path to /users here
 		file_path = job_directory + file_name
 		#print(file_directory)
 		file = open(file_path, "w+")
@@ -171,8 +172,12 @@ def createJobForUserIdWithData(userId, jsonData):
 
 	parameters = jsonData["parameters"]
 
+	backend = parameters["backend"]
+	if backend == "CUDA":
+		backend = "GPU"
+
 	createOxDNAFile(files, parameters, job_directory)
-	createSlurmJobFile(job_directory, parameters["backend"])
+	createSlurmJobFile(job_directory, backend)
 	
 	job_number = startSlurmJob(job_directory, randomJobId)
 
